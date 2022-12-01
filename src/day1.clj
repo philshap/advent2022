@@ -19,8 +19,7 @@
 
 (defn part2 []
   (->> sorted-cals
-       reverse
-       (take 3)
+       (take-last 3)
        (reduce +)))
 
 (comment
