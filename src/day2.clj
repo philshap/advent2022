@@ -2,11 +2,11 @@
   (:require [clojure.string :as str]))
 
 (defn char->val [ch base]
-  (inc (- (int ch) (int base))))
+  (- (int ch) (int base)))
 
-;; A/X - rock = 1
-;; B/Y - paper = 2
-;; C/Z - scissors = 3
+;; A/X - rock = 0
+;; B/Y - paper = 1
+;; C/Z - scissors = 2
 (defn parse-line [[them _ us]]
   [(char->val them \A) (char->val us \X)])
 
@@ -16,18 +16,19 @@
       str/split-lines
       (->> (map parse-line))))
 
-(def lose 1)
-(def draw 2)
-(def win 3)
-(def outcome->score {win 6, draw 3, lose 0})
+(def lose 0)
+(def draw 1)
+(def win 2)
+(defn outcome->score [outcome]
+  (* 3 outcome))
 
 (def outcome->play
-  {lose #(inc (mod (inc %) 3)),
+  {lose #(mod (dec %) 3),
    draw identity,
-   win #(inc (mod % 3))})
+   win  #(mod (inc %) 3)})
 
 (defn score-part1 [[them us]]
-  (+ us
+  (+ (inc us)
      (outcome->score
        (cond
         (= ((outcome->play draw) them) us) draw
@@ -39,10 +40,9 @@
        (map score-part1)
        (reduce +)))
 
-;; 1 - lose, 2 - draw, 3 - win
 (defn score-part2 [[them outcome]]
   (+ (outcome->score outcome)
-     ((outcome->play outcome) them)))
+     (inc ((outcome->play outcome) them))))
 
 (defn part2 []
   (->> input
