@@ -9,25 +9,28 @@
       str/split-lines))
 
 (defn score [item]
-  (let [item (int item)
-        a-int (int \a)]
-    (if (and (>= item a-int) (<= item (int \z)))
-      (inc (- item a-int))
+  (let [item (int item)]
+    (if (<= (int \a) item (int \z))
+      (inc (- item (int \a)))
       (+ 27 (- item (int \A))))))
 
-(defn part1 []
-  (->> input
+(defn group-and-score [size split-sack items]
+  (->> items
        (map seq)
-       (map #(partition (/ (count %) 2) %))
-       (map (fn [[c1 c2]] (set/intersection (set c1) (set c2))))
-       (map (comp score first))
+       (mapcat split-sack)
+       (map set)
+       (partition size)
+       (map (comp score first #(reduce set/intersection %)))
        (reduce +)))
 
+(defn split-in-half [items]
+  (partition (/ (count items) 2) items))
+
+(defn part1 []
+  (group-and-score 2 split-in-half input))
+
 (defn part2 []
-  (->> input
-       (partition 3)
-       (map (fn [x] (->> x (map (comp set seq)) (reduce set/intersection) first score)))
-       (reduce +)))
+  (group-and-score 3 list input))
 
 ; part 1:  8202
 ; part 2:  2864
