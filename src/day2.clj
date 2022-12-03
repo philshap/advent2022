@@ -27,27 +27,26 @@
    draw identity,
    win  #(mod (inc %) 3)})
 
-(defn score-part1 [[them us]]
-  (+ (inc us)
-     (outcome->score
-       (cond
+(defn strategy-score [input make-move]
+  (->> input
+       (map make-move)
+       (map (fn [[move outcome]] (+ (inc move) (outcome->score outcome))))
+       (reduce +)))
+
+(defn part1-move [[them us]]
+  [us (cond
         (= ((outcome->play draw) them) us) draw
         (= ((outcome->play lose) them) us) lose
-        :else win))))
+        :else win)])
 
 (defn part1 []
-  (->> input
-       (map score-part1)
-       (reduce +)))
+  (strategy-score input part1-move))
 
-(defn score-part2 [[them outcome]]
-  (+ (outcome->score outcome)
-     (inc ((outcome->play outcome) them))))
+(defn part2-move [[them outcome]]
+  [((outcome->play outcome) them) outcome])
 
 (defn part2 []
-  (->> input
-       (map score-part2)
-       (reduce +)))
+  (strategy-score input part2-move))
 
 ; part 1:  14375
 ; part 2:  10274
