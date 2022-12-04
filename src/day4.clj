@@ -17,7 +17,7 @@
        count))
 
 (defn overlap? [[low1 hi1 low2 hi2]]
-  (or (<= low1 hi2 hi1) (<= low2 hi1 hi2)))
+  (and (<= low1 hi2) (<= low2 hi1)))
 
 (defn part2 []
   (->> input
