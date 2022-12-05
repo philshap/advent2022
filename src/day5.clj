@@ -31,8 +31,8 @@
     [(parse-stacks stacks) (parse-moves moves)]))
 
 (defn stack-tops [stacks]
-  (->> (range 1 (inc (count stacks)))
-       (map #(get stacks %))
+  (->> (range (count stacks))
+       (map #(get stacks (inc %)))
        (map first)))
 
 (defn move-crates [[stacks moves] do-move]
