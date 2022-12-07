@@ -6,6 +6,8 @@
       slurp
       str/split-lines))
 
+;; Add the size to all directories on the path.
+;; dirs is a map of path => total size
 (defn update-dirs [path dirs size]
   (loop [path path
          dirs dirs]
@@ -13,20 +15,26 @@
       dirs
       (recur (pop path)
              (update dirs path (fnil #(+ size %) 0))))))
+
+;; For ls, consume lines until a new command line ($) or no more commands are present.
+;; For each line, if it starts with a number, add that to all directories on the path.
+;; "dir" lines are ignored
 (defn run-ls [state]
   (->> state
        (iterate
          (fn [[[command & cmds] path dirs]]
            (let [size (parse-long (first (str/split command #" ")))
-                 new-dirs
-                 (if (number? size)
-                   (update-dirs path dirs size)
-                   dirs)]
+                 new-dirs (if (number? size)
+                            (update-dirs path dirs size)
+                            dirs)]
              [cmds path new-dirs])))
        (drop-while (fn [[[command & _] & _]]
                      (and (string? command)
                           (not (str/starts-with? command "$")))))
        first))
+
+;; Run a cd or ls command.
+;; cd is run by changing the path
 (defn run-command [[[command & cmds] path dirs]]
   (if (string? command)
     (if (str/starts-with? command "$ cd")
