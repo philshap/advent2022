@@ -16,42 +16,26 @@
       (recur (pop path)
              (update dirs path (fnil #(+ size %) 0))))))
 
-;; For ls, consume lines until a new command line ($) or no more commands are present.
-;; For each line, if it starts with a number, add that to all directories on the path.
-;; "dir" lines are ignored
-(defn run-ls [state]
-  (->> state
-       (iterate
-         (fn [[[command & cmds] path dirs]]
-           (let [size (parse-long (first (str/split command #" ")))
-                 new-dirs (if (number? size)
-                            (update-dirs path dirs size)
-                            dirs)]
-             [cmds path new-dirs])))
-       (drop-while (fn [[[command & _] & _]]
-                     (and (string? command)
-                          (not (str/starts-with? command "$")))))
-       first))
-
-;; Run a cd or ls command.
-;; cd is run by changing the path
-(defn run-command [[[command & cmds] path dirs]]
-  (if (string? command)
-    (if (str/starts-with? command "$ cd")
-      (let [arg (last (str/split command #" "))
-            new-path (case arg
-                       "/" ["/"]
-                       ".." (pop path)
-                       (conj path arg))]
-        [cmds new-path dirs])
-      (run-ls [cmds path dirs]))
-    [nil path dirs]))
+;; Run a cd or handle the output of the ls command.
+;; cd is run by changing the path. The path is a vector (stack) of directory names.
+;; For non-cd lines, if it starts with a number, add that to all directories on the path.
+(defn run-command [[path dirs] command]
+  (let [[maybe-size cmd arg] (str/split command #" ")]
+    (if (= cmd "cd")
+      [(case arg
+         "/" ["/"]
+         ".." (pop path)
+         (conj path arg))
+       dirs]
+     (let [size (parse-long maybe-size)
+           new-dirs (if (number? size)
+                      (update-dirs path dirs size)
+                      dirs)]
+       [path new-dirs]))))
 
 (defn dir-sizes [input]
-  (->> [input [] {}]
-       (iterate run-command)
-       (drop-while #(not (empty? (first %))))
-       first
+  (->> input
+       (reduce run-command [[] {}])
        last))
 
 (defn part1 []
@@ -76,7 +60,7 @@
 
 ; part 1:  1297159
 ; part 2:  3866390
-(comment
+;(comment
   (println "part 1: " (part1))
   (println "part 2: " (part2))
-  )
+  ;)
