@@ -2,21 +2,23 @@
   (:require [clojure.string :as str]))
 
 (def input
-  (-> "src/day8-input.txt"
-      slurp
-      str/split-lines
-      (->>
-        (map (partial re-seq #"\d"))
-        (mapv (comp vec #(map (comp parse-long) %))))))
+  (let [lines (->>
+                (str/split-lines (slurp "src/day8-input.txt"))
+                (map #(str/split % #"")))]
+    (->>
+      (for [y (range (count lines))
+            :let [line (nth lines y)]
+            x (range (count line))]
+        [[x y] (parse-long (nth line x))])
+      (into {}))))
 
 (def dirs [[0, -1], [-1, 0], [0, 1], [1, 0]])
 
-(defn tree-at [trees [x y]]
-  (nth (nth trees x) y))
+(defn tree-at [trees pos]
+  (trees pos))
 
-(defn valid-pos? [trees [x y]]
-  (and (<= 0 x (dec (count trees)))
-       (<= 0 y (dec (count trees)))))
+(defn valid-pos? [trees pos]
+  (some? (tree-at trees pos)))
 
 (defn visible-in-dir [trees pos height dir]
   (let [next-pos (mapv + pos dir)]
@@ -30,9 +32,7 @@
        (some true?)))
 
 (defn part1 []
-  (->> (for [x (range (count input))
-             y (range (count (first input)))]
-         [x y])
+  (->> (keys input)
        (filter (partial visible? input))
        count))
 
@@ -50,9 +50,7 @@
        (reduce *)))
 
 (defn part2 []
-  (->> (for [x (range (count input))
-             y (range (count (first input)))]
-         [x y])
+  (->> (keys input)
        (map (partial scenic-score input))
        (reduce max)))
 
