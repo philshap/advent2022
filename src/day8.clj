@@ -14,10 +14,13 @@
 (defn tree-at [trees [x y]]
   (nth (nth trees x) y))
 
+(defn valid-pos? [trees [x y]]
+  (and (<= 0 x (dec (count trees)))
+       (<= 0 y (dec (count trees)))))
+
 (defn visible-in-dir [trees pos height dir]
-  (let [[x y :as next-pos] (mapv + pos dir)]
-    (or (< x 0) (>= y (count (first trees)))
-        (< y 0) (>= x (count trees))
+  (let [next-pos (mapv + pos dir)]
+    (or (not (valid-pos? trees next-pos))
         (and (< (tree-at trees next-pos) height)
              (recur trees next-pos height dir)))))
 
@@ -33,18 +36,17 @@
        (filter (partial visible? input))
        count))
 
-(defn score [trees pos height dir]
-  (let [[x y :as next-pos] (mapv + pos dir)]
-    (if (or (< x 0) (>= y (count (first trees)))
-            (< y 0) (>= x (count trees)))
+(defn score-in-dir [trees pos height dir]
+  (let [next-pos (mapv + pos dir)]
+    (if (not (valid-pos? trees next-pos))
       0
-      (+ 1 (if (< (tree-at trees next-pos) height)
-             (score trees next-pos height dir)
+      (inc (if (< (tree-at trees next-pos) height)
+             (score-in-dir trees next-pos height dir)
              0)))))
 
 (defn scenic-score [trees pos]
   (->> dirs
-       (map (partial score trees pos (tree-at trees pos)))
+       (map (partial score-in-dir trees pos (tree-at trees pos)))
        (reduce *)))
 
 (defn part2 []
@@ -57,7 +59,7 @@
 ; part 1:  1789
 ; part 2:  314820
 
-;(comment
-(println "part 1: " (part1))
-(println "part 2: " (part2))
-;)
+(comment
+  (println "part 1: " (part1))
+  (println "part 2: " (part2))
+  )
