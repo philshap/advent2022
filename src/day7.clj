@@ -8,30 +8,25 @@
 
 ;; Add the size to all directories on the path.
 ;; dirs is a map of path => total size
-(defn update-dirs [path dirs size]
-  (loop [path path
-         dirs dirs]
-    (if (empty? path)
-      dirs
-      (recur (pop path)
-             (update dirs path (fnil #(+ size %) 0))))))
+;; paths is a list of the current path and all path prefixes
+(defn update-dirs [paths dirs size]
+  (reduce (fn [dirs path]
+            (update dirs path (fnil #(+ size %) 0)))
+          dirs paths))
 
 ;; Run a cd or handle the output of the ls command.
 ;; cd is run by changing the path. The path is a vector (stack) of directory names.
 ;; For non-cd lines, if it starts with a number, add that to all directories on the path.
-(defn run-command [[path dirs] command]
+(defn run-command [[paths dirs] command]
   (let [[maybe-size cmd arg] (str/split command #" ")]
     (if (= cmd "cd")
       [(case arg
-         "/" ["/"]
-         ".." (pop path)
-         (conj path arg))
+         "/" [["/"]]
+         ".." (pop paths)
+         (conj paths (conj (peek paths) arg)))
        dirs]
-     (let [size (parse-long maybe-size)
-           new-dirs (if (number? size)
-                      (update-dirs path dirs size)
-                      dirs)]
-       [path new-dirs]))))
+      [paths (update-dirs paths dirs
+                         (or (parse-long maybe-size) 0))])))
 
 (defn dir-sizes [input]
   (->> input
@@ -60,7 +55,7 @@
 
 ; part 1:  1297159
 ; part 2:  3866390
-;(comment
+(comment
   (println "part 1: " (part1))
   (println "part 2: " (part2))
-  ;)
+  )
