@@ -3,7 +3,7 @@
 (def input (slurp "src/day6-input.txt"))
 
 (defn find-unique [input size]
-  (->> (seq input)
+  (->> input
        (partition size 1)
        (map (comp count set))
        (take-while #(not= size %))
