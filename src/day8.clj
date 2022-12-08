@@ -2,14 +2,12 @@
   (:require [clojure.string :as str]))
 
 (def input
-  (let [lines (->>
-                (str/split-lines (slurp "src/day8-input.txt"))
-                (map #(str/split % #"")))]
+  (let [lines (-> "src/day8-input.txt" slurp str/split-lines)]
     (->>
       (for [y (range (count lines))
             :let [line (nth lines y)]
             x (range (count line))]
-        [[x y] (parse-long (nth line x))])
+        [[x y] (-> (nth line x) str parse-long)])
       (into {}))))
 
 (def dirs [[0, -1], [-1, 0], [0, 1], [1, 0]])
