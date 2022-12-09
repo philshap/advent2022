@@ -4,8 +4,7 @@
 (def input
   (-> "src/day9-input.txt"
       slurp
-      str/split-lines
-      ))
+      str/split-lines))
 
 (def move->delta {\U [0 -1], \D [0 1], \L [-1 0], \R [1 0]})
 
@@ -18,35 +17,43 @@
   (let [[dx dy] (mapv - head tail)
         ddx (two->one dx)
         ddy (two->one dy)]
-    ;(println head tail dx dy ddx ddy)
     (cond
       (and (not= 2 (abs dx)) (not= 2 (abs dy))) tail
       (zero? dx) [tx (+ ddy ty)]
       (zero? dy) [(+ ddx tx) ty]
       :else [(+ ddx tx) (+ ddy ty)])))
 
-(defn move-one [move [head tail visited]]
+(defn move-one [move [[head & tails] visited]]
   (let [new-head (move-head head move)
-        new-tail (move-tail new-head tail)]
-    ;(println move new-head new-tail)
-    [new-head new-tail (conj visited new-tail)]))
+        new-rope (reduce
+                   (fn [new-rope tail]
+                     (conj new-rope (move-tail (last new-rope) tail)))
+                   [new-head] tails)]
+    [new-rope (conj visited (last new-rope))]))
 
 (defn move-rope [state [move _ & num]]
-  ;(println state move num)
-  (->> state
-       (iterate (partial move-one move))
-       (drop (parse-long (apply str num)))
-       first))
+  (->
+    (iterate (partial move-one move) state)
+    (nth (parse-long (apply str num)))))
 
-(defn part1 []
-  (-> (reduce move-rope [[0 0] [0 0] #{}] input)
+(defn make-rope [size]
+  (repeatedly size (constantly [0 0])))
+
+(defn play-rope-game [moves rope-length]
+  (-> (reduce move-rope [(make-rope rope-length) #{}] moves)
       last
       count))
 
-(defn part2 []
-  )
+(defn part1 []
+  (play-rope-game input 2))
 
-;(comment
-(println "part 1: " (part1))
-(println "part 2: " (part2))
-;)
+(defn part2 []
+  (play-rope-game input 10))
+
+; part 1:  5710
+; part 2:  2259
+
+(comment
+  (println "part 1: " (part1))
+  (println "part 2: " (part2))
+  )
