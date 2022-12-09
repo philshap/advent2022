@@ -11,17 +11,13 @@
 (defn move-head [head move]
   (mapv + (move->delta move) head))
 
-(def two->one {2 1, -2 -1, 1 1, -1 -1})
+(def delta->move {2 1, -2 -1, 1 1, -1 -1, 0 0})
 
 (defn move-tail [head [tx ty :as tail]]
-  (let [[dx dy] (mapv - head tail)
-        ddx (two->one dx)
-        ddy (two->one dy)]
-    (cond
-      (and (not= 2 (abs dx)) (not= 2 (abs dy))) tail
-      (zero? dx) [tx (+ ddy ty)]
-      (zero? dy) [(+ ddx tx) ty]
-      :else [(+ ddx tx) (+ ddy ty)])))
+  (let [[dx dy] (mapv - head tail)]
+    (if (or (= 2 (abs dx)) (= 2 (abs dy)))
+      [(+ (delta->move dx) tx) (+ (delta->move dy) ty)]
+      tail)))
 
 (defn move-one [move [[head & tails] visited]]
   (let [new-head (move-head head move)
