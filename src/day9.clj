@@ -11,12 +11,12 @@
 (defn move-head [head move]
   (mapv + (move->delta move) head))
 
-(def delta->move {2 1, -2 -1, 1 1, -1 -1, 0 0})
+(def sgn {-2 -1, -1 -1, 0 0, 1 1, 2 1})
 
 (defn move-tail [head [tx ty :as tail]]
   (let [[dx dy] (mapv - head tail)]
     (if (or (= 2 (abs dx)) (= 2 (abs dy)))
-      [(+ (delta->move dx) tx) (+ (delta->move dy) ty)]
+      [(+ (sgn dx) tx) (+ (sgn dy) ty)]
       tail)))
 
 (defn move-one [move [[head & tails] visited]]
