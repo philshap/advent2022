@@ -31,9 +31,10 @@
 
 (defn part2 []
   (->> (iterate run-one [input 1 nil])
-       (take (* width lines))
        (map-indexed to-pixel)
-       (partition width)))
+       (partition width)
+       (take lines)
+       (map (partial apply str))))
 
 ; part 1:  14620
 ; part 2:  BJFRHRFU
