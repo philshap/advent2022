@@ -23,7 +23,7 @@
 (def width 40)
 (def lines 6)
 
-(defn to-pixel [[pos x-reg]]
+(defn to-pixel [pos [_ x-reg _]]
   (let [pos (mod pos width)]
     (if (<= (dec pos) x-reg (inc pos))
       \#
@@ -32,9 +32,7 @@
 (defn part2 []
   (->> (iterate run-one [input 1 nil])
        (take (* width lines))
-       (map second)
-       (map-indexed vector)
-       (map to-pixel)
+       (map-indexed to-pixel)
        (partition width)))
 
 ; part 1:  14620
