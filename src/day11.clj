@@ -19,55 +19,57 @@
   (let [lines (str/split-lines data)
         [op arg] (take-last 2 (str/split (nth lines 2) #" "))
         line->int #(str->int (nth lines %))]
-    [(str->ints (second lines))
-     0
-     #((if (= op "+") + *) % (or (parse-long arg) %))
-     #(if (zero? (rem % (line->int 3)))
-        (line->int 4)
-        (line->int 5))]))
+    {(line->int 0)
+     [(str->ints (second lines))
+      0
+      #((if (= op "+") + *) % (or (parse-long arg) %))
+      #(if (zero? (rem % (line->int 3)))
+         (line->int 4)
+         (line->int 5))
+      ;; collect all divisors
+      (line->int 3)]}))
 
 (defn make-monkeys [input]
-  (->> input
-       (map make-monkey)
-       (map-indexed hash-map)
-       (apply merge)))
+  (->> (map make-monkey input)
+       (reduce merge)))
 
 (defn throw-to-monkey [monkeys monkey-num item]
-  (update monkeys monkey-num (fn [[items count op1 op2]] [(conj items item) count op1 op2])))
+  (update monkeys monkey-num (fn [[items count op1 op2]]
+                               [(conj items item) count op1 op2])))
 
-(defn do-round [monkeys]
-  (reduce (fn [monkeys monkey-num]
-            (let [[items inspects update-worry throw-next] (monkeys monkey-num)]
-              (reduce (fn [monkeys item]
-                        (let [new-worry (quot (update-worry item) 3)]
-                          (throw-to-monkey monkeys (throw-next new-worry) new-worry)))
-                      (assoc monkeys monkey-num [[] (+ inspects (count items)) update-worry throw-next])
-                      items)))
-          monkeys (sort (keys monkeys))))
+(defn do-round [handle-worry monkeys]
+  (reduce
+    (fn [monkeys monkey-num]
+      (let [[items inspects update-worry throw-next] (monkeys monkey-num)]
+        (reduce
+          (fn [monkeys item]
+            (let [new-worry (handle-worry (update-worry item))]
+              (throw-to-monkey monkeys (throw-next new-worry) new-worry)))
+          (assoc monkeys monkey-num [[] (+ inspects (count items)) update-worry throw-next])
+          items)))
+    monkeys (sort (keys monkeys))))
+
+(defn monkey-business [monkeys rounds handle-worry]
+  (->> monkeys
+       (iterate (partial do-round handle-worry))
+       (#(nth % rounds))
+       vals
+       (map second)
+       sort
+       (take-last 2)
+       (reduce *)))
 
 (defn part1 []
-  (->> (make-monkeys input)
-       (iterate do-round)
-       (#(nth % 20))
-       (#(update-vals % second))
-       vals
-       sort
-       (take-last 2)
-       (reduce *)))
+  (monkey-business (make-monkeys input) 20 #(quot % 3)))
 
-;; part2 is wrong..
 (defn part2 []
-  (->> (make-monkeys input)
-       (iterate do-round)
-       (#(nth % 10000))
-       (#(update-vals % second))
-       vals
-       sort
-       (take-last 2)
-       (reduce *)))
+  (let [monkeys (make-monkeys input)
+        ;; all divisors happen to be primes, so lcm is (reduce *)
+        lcm (->> (vals monkeys) (map last) (reduce *))]
+    (monkey-business monkeys 10000 #(mod % lcm))))
 
 ;part 1:  98280
-;part 2:  28216440504
+;part 2:  17673687232
 
 (comment
   (println "part 1: " (part1))
