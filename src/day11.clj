@@ -14,7 +14,8 @@
 ;3  Test: divisible by 11
 ;4    If true: throw to monkey 2
 ;5    If false: throw to monkey 3
-
+; map of monkey num => [<items>, <inspects>, <inspect-item>, <divisor>, <to1>, <to2>]
+; {0 [[56, 52, 58, 96, 70, 75, 72], 0, <>, 11, 2, 3]
 (defn make-monkey [data]
   (let [lines (str/split-lines data)
         [op arg] (take-last 2 (str/split (nth lines 2) #" "))
@@ -23,35 +24,36 @@
      [(str->ints (second lines))
       0
       #((if (= op "+") + *) % (or (parse-long arg) %))
-      #(if (zero? (rem % (line->int 3)))
-         (line->int 4)
-         (line->int 5))
-      ;; collect all divisors
-      (line->int 3)]}))
+      (line->int 3)
+      (line->int 4)
+      (line->int 5)]}))
 
 (defn make-monkeys [input]
   (->> (map make-monkey input)
        (reduce merge)))
 
-(defn throw-to-monkey [monkeys monkey-num item]
-  (update monkeys monkey-num (fn [[items count op1 op2]]
-                               [(conj items item) count op1 op2])))
+(defn give-to-monkey [monkeys monkey-num item]
+  (update monkeys monkey-num
+          (fn [[items inspects inspect-item divisor to1 to2]]
+            [(conj items item) inspects inspect-item divisor to1 to2])))
 
-(defn do-round [handle-worry monkeys]
+(defn do-round [reduce-worry monkeys]
   (reduce
     (fn [monkeys monkey-num]
-      (let [[items inspects update-worry throw-next] (monkeys monkey-num)]
+      (let [[items inspects inspect-item divisor to1 to2] (monkeys monkey-num)]
         (reduce
           (fn [monkeys item]
-            (let [new-worry (handle-worry (update-worry item))]
-              (throw-to-monkey monkeys (throw-next new-worry) new-worry)))
-          (assoc monkeys monkey-num [[] (+ inspects (count items)) update-worry throw-next])
+            (let [new-worry (reduce-worry (inspect-item item))]
+              (give-to-monkey monkeys
+                              (if (zero? (rem new-worry divisor)) to1 to2)
+                              new-worry)))
+          (assoc monkeys monkey-num [[] (+ inspects (count items)) inspect-item divisor to1 to2])
           items)))
     monkeys (sort (keys monkeys))))
 
-(defn monkey-business [monkeys rounds handle-worry]
+(defn monkey-business [monkeys rounds reduce-worry]
   (->> monkeys
-       (iterate (partial do-round handle-worry))
+       (iterate (partial do-round reduce-worry))
        (#(nth % rounds))
        vals
        (map second)
@@ -65,7 +67,7 @@
 (defn part2 []
   (let [monkeys (make-monkeys input)
         ;; all divisors happen to be primes, so lcm is (reduce *)
-        lcm (->> (vals monkeys) (map last) (reduce *))]
+        lcm (->> (vals monkeys) (map #(nth % 3)) (reduce *))]
     (monkey-business monkeys 10000 #(mod % lcm))))
 
 ;part 1:  98280
