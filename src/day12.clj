@@ -32,7 +32,7 @@
                    (map #(mapv + pos %))
                    (remove #(get visited %))
                    (filter #(can-move? grid pos %)))
-        new-visited (reduce (fn [visited move] (assoc visited move new-cost)) visited moves)
+        new-visited (merge visited (zipmap moves (repeat new-cost)))
         new-queue (concat tail moves)]
     (if (empty? new-queue)
       [() (assoc visited end max-steps)]
@@ -50,11 +50,7 @@
     (find-path grid [start] end)))
 
 (defn find-starts [grid]
-  (reduce (fn [starts pos]
-            (if (= (grid pos) (int \a))
-              (conj starts pos)
-              starts))
-          [] (keys grid)))
+  (->> (keys grid) (filter #(= (grid %) (int \a)))))
 
 (defn part2 []
   (let [[grid _ end] input]
