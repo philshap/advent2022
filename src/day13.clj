@@ -29,20 +29,17 @@
   (->> input
        (keep-indexed
          (fn [index [left right]]
-           (if (ordered? left right)
-             (inc index))))
+           (if (ordered? left right) index)))
+       (map inc)
        (reduce +)))
 
-(def div-packets [[[2]] [[6]]])
+(def div-packets #{[[2]] [[6]]})
 (defn part2 []
-  (->> input
-       (reduce concat)
+  (->> (apply concat input)
        (concat div-packets)
        (sort ordered?)
-       (keep-indexed
-         (fn [index packet]
-           (if (some #(= % packet) div-packets)
-             (inc index))))
+       (keep-indexed #(if (div-packets %2) %1))
+       (map inc)
        (reduce *)))
 
 ; part 1:  5390
