@@ -38,8 +38,8 @@
       [() (assoc visited end max-steps)]
       [new-queue new-visited])))
 
-(defn find-path [grid start end]
-  (->> [[start] {start 0}]
+(defn find-path [grid starts end]
+  (->> [starts (merge (zipmap starts (repeat 0)))]
        (iterate (partial make-move grid end))
        (map (fn [[_ visited]] (visited end)))
        (filter some?)
@@ -47,7 +47,7 @@
 
 (defn part1 []
   (let [[grid start end] input]
-    (find-path grid start end)))
+    (find-path grid [start] end)))
 
 (defn find-starts [grid]
   (reduce (fn [starts pos]
@@ -56,13 +56,9 @@
               starts))
           [] (keys grid)))
 
-;; need to make this bfs too. it works but it's slow.
 (defn part2 []
   (let [[grid _ end] input]
-    (->> (find-starts grid)
-         (map #(find-path grid % end))
-         sort
-         first)))
+    (find-path grid (find-starts grid) end)))
 
 ; part 1:  447
 ; part 2:  446
