@@ -106,9 +106,12 @@
        highest-rock
        abs))
 
-;; looking for patterns in the data by printing the highest rock every 1000 rocks.
+;; part 2 not working
+
 ;; In theory the number of layers added should be constant after (* (count rocks) (count input))
 ;; iterations. But that's 50455 iterations and will still take hours to run.
+
+;; looking for patterns in the data by printing the highest rock every 1000 rocks.
 (defn part2 []
   (->> [(make-chamber) (cycle rocks) (cycle input)]
        (iterate drop-next-rock)
