@@ -15,18 +15,18 @@
                   [_ out in1 op in2] (re-find #"([a-z]{4}): ([a-z]{4}) (.) ([a-z]{4})" line)]
               (if value
                 [(assoc values name (parse-long value)) forms]
-                [values (conj forms [out in1 op in2])])))
-          [{} #{}]
+                [values (assoc forms out [in1 op in2])])))
+          [{} {}]
           input))
 
 (def op->op {"*" *, "+" +, "-" -, "/" /})
 
 (defn reduce-one [[values forms]]
-  (reduce (fn [_ [out in1 op in2 :as form]]
+  (reduce-kv (fn [_ out [in1 op in2]]
             (let [v1 (values in1)
                   v2 (values in2)]
               (if (and v1 v2)
-                (reduced [(assoc values out ((op->op op) v1 v2)) (disj forms form)])
+                (reduced [(assoc values out ((op->op op) v1 v2)) (dissoc forms out)])
                 [values forms])))
           nil
           forms))
@@ -50,20 +50,13 @@
 (defn reverse-solve-arg2 [result op arg]
   ((op->arg2-missing op) result arg))
 
-(defn get-form [result forms]
-  (->> forms
-       (filter #(= result (first %)))
-       first))
-
 (defn reverse-solve-one [[values forms current value]]
-  (let [[_ arg1 op arg2] (get-form current forms)
+  (let [[arg1 op arg2] (forms current)
         val1 (values arg1)
         val2 (values arg2)]
     (if val1
       [values forms arg2 (reverse-solve-arg2 value op val1)]
       [values forms arg1 (reverse-solve-arg1 value op val2)])))
-
-;; store forms as map of (result => expr)
 
 (def root "root")
 (def human "humn")
@@ -76,7 +69,7 @@
        (drop-while (fn [[s1 s2]] (not= s1 s2)))
        ffirst
        ((fn [[values forms]]
-          (let [[_ next-root _ value] (get-form root forms)]
+          (let [[next-root _ value] (forms root)]
             [values forms next-root (values value)])))
        (iterate reverse-solve-one)
        (drop-while (fn [[_ _ current _]] (not= current human)))
