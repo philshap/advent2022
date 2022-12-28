@@ -38,8 +38,53 @@
        ffirst
        (#(% "root"))))
 
+(def op->arg1-missing {"*" /, "+" -, "-" +, "/" *})
+
+;; solve for missing arg1
+(defn reverse-solve-arg1 [result op arg]
+  ((op->arg1-missing op) result arg))
+
+(def op->arg2-missing {"*" /, "+" -, "-" #(- %2 %1), "/" #(/ %2 %1)})
+
+;; solve for missing arg2
+(defn reverse-solve-arg2 [result op arg]
+  ((op->arg2-missing op) result arg))
+
+(defn get-form [result forms]
+  (->> forms
+       (filter #(= result (first %)))
+       first))
+
+(defn reverse-solve-one [[values forms current value]]
+  (let [[_ arg1 op arg2] (get-form current forms)
+        val1 (values arg1)
+        val2 (values arg2)]
+    (if val1
+      [values forms arg2 (reverse-solve-arg2 value op val1)]
+      [values forms arg1 (reverse-solve-arg1 value op val2)])))
+
+;; store forms as map of (result => expr)
+
+(def root "root")
+(def human "humn")
+
 (defn part2 []
-  )
+  (->> (parse-input input)
+       ((fn [[values forms]] [(dissoc values human) forms]))
+       (iterate reduce-one)
+       (partition 2)
+       (drop-while (fn [[s1 s2]] (not= s1 s2)))
+       ffirst
+       ((fn [[values forms]]
+          (let [[_ next-root _ value] (get-form root forms)]
+            [values forms next-root (values value)])))
+       (iterate reverse-solve-one)
+       (drop-while (fn [[_ _ current _]] (not= current human)))
+       first
+       last))
+
+;; part 1:  232974643455000
+;; part 2:  3740214169961
 
 (comment
   (println "part 1: " (part1))
